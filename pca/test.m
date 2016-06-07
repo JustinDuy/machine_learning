@@ -9,11 +9,13 @@ images = loadMNISTImages('t10k-images.idx3-ubyte');
 labels = loadMNISTLabels('t10k-labels.idx1-ubyte');
 imgcount = size(images,2);
 
+projtestimg = [];
 %demean and project test images
 for i=1:imgcount
     img = images(:,i);
     img = double(img)-m; % mean subtracted vector
-    projtestimg = eigenfaces'*img; % projection of test image onto the facespace
+    temp = eigenfaces'*img; % projection of test image onto the facespace
+    projtestimg = [projtestimg temp];
 end
 
 MAX_d = 60;
@@ -32,7 +34,7 @@ for d = 1: MAX_d
     for j = 1: classcount
         classj = cell2mat(classes(j));
         mu(d,j) = {mean(classj, 2)}; %classes(j): d x m
-        sigma(d,j) = {cov(classj)};
+        sigma(d,j) = {cov(classj')};
     end    
 end
 
@@ -43,7 +45,10 @@ for d = 1 : MAX_d
         max_likelihood = -1;
         for j = 1 : classcount
             %compute likelihood for each class j of input i
-            likelihood = mvnpdf(projtestimg(1:d,i), cell2mat(mu(d,j)), cell2mat(sigma(d,j)));
+            x = projtestimg(1:d,i);
+            muj = cell2mat(mu(d,j));
+            sigmaj = cell2mat(sigma(d,j));
+            likelihood = mvnpdf(x, muj, sigmaj);
             if likelihood > max_likelihood
                 max_likelihood = likelihood;
                 classification_error(i,d) = (j ~= labels(i));
