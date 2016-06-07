@@ -7,34 +7,27 @@ demean = images - repmat(m, 1, imgcount);
 
 C = cov(demean') ; 
 [V,D]=eig(C);  %% V : eigenvector matrix  D : eigenvalue matrix
+%sort eigen vector based on eigen value descending:
+D2=diag(sort(diag(D),'descend')); % make diagonal matrix out of sorted diagonal values of input D
+[c, ind]=sort(diag(D),'descend'); % store the indices of which columns the sorted eigenvalues come from
+V2=V(:,ind); % arrange the columns in this order
 
+MAX_d = 60;
 %get the principal components
 eigenfaces = [];
+max_eigen_value = minreal;
 for i = 1 : size(V,2) 
-    if( D(i,i) > 1 )
-        eigenfaces = [eigenfaces V(:,i)];
+    if( D2(i,i) > 0 )
+        eigenfaces = [eigenfaces V2(:,i)];
     end
 end
 
 %%%%%%% finding the projection of each image vector on the facespace (where the eigenfaces are the co-ordinates or dimensions) %%%%%
 projectimg = [ ];  % projected image vector matrix
-for i = 1 : size(eigenfaces,1)
+for i = 1 : imgcount
     temp = eigenfaces' * demean(:,i);
     projectimg = [projectimg temp];
 end
 
-
-%%%calculate mean and covariance of gaussian dist for each class (0->9) 
-classcount = 10;
-classes = cell(classcount,1);
-for i= 1: imgcount
-    label = labels(i) + 1 %matlab index from 1->10
-    classes(label,1) = [{classes(label,1)} projectimg(:,i)];
-end
-%muj = zeros(classcount,1);
-%sigmaj = cell(1, classcount);
-%for j= 1 : classcount
- %   muj(j) = mean(classes(1,j));
- %   sigmaj(1,j) = {cov(classes(1,j))};
-%end
-
+save('mean','m');
+save('eigenfaces', 'eigenfaces');
