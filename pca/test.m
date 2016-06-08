@@ -38,8 +38,7 @@ for d = 1: MAX_d
     end    
 end
 
-%classify test images 
-classification_error = (-1) * ones(imgcount, MAX_d);
+%classify test images
 likelihood = zeros(imgcount,  MAX_d, classcount);
 for d = 1 : MAX_d
     for j = 1 : classcount
@@ -53,9 +52,3 @@ for d = 1 : MAX_d
 end
 
 save('likelihood',likelihood);
-%for d = 1 : MAX_d
-%    class = (likelihood(i,:,d) == max(likelihood(i,:,d)));
-%    classification_error(i,d) = class(1) ~= labels(i);
-%end
-%classification_error = sum(classification_error,1);
-%optimal_d = classification_error == max(classification_error); 
