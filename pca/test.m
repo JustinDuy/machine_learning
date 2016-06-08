@@ -6,7 +6,7 @@ load('eigenfaces');%eigenfaces
 
 %load test data
 images = loadMNISTImages('t10k-images.idx3-ubyte');
-labels = loadMNISTLabels('t10k-labels.idx1-ubyte');
+
 imgcount = size(images,2);
 
 projtestimg = [];
@@ -40,21 +40,22 @@ end
 
 %classify test images 
 classification_error = (-1) * ones(imgcount, MAX_d);
+likelihood = zeros(imgcount,  MAX_d, classcount);
 for d = 1 : MAX_d
-    for i= 1 : imgcount
-        max_likelihood = -1;
-        for j = 1 : classcount
-            %compute likelihood for each class j of input i
-            x = projtestimg(1:d,i);
-            muj = cell2mat(mu(d,j));
-            sigmaj = cell2mat(sigma(d,j));
-            likelihood = mvnpdf(x, muj, sigmaj);
-            if likelihood > max_likelihood
-                max_likelihood = likelihood;
-                classification_error(i,d) = (j ~= labels(i));
-            end
+    for j = 1 : classcount
+        %compute likelihood for each class j of input i
+        muj = cell2mat(mu(d,j));
+        sigmaj = cell2mat(sigma(d,j));
+        for i = 1 : imgcount
+            likelihood(i,d,j) = mvnpdf(projtestimg(1:d, i), muj, sigmaj);
         end
-    end
+    end    
 end
-classification_error = sum(classification_error,1);
-optimal_d = classification_error == max(classification_error); 
+
+save('likelihood',likelihood);
+%for d = 1 : MAX_d
+%    class = (likelihood(i,:,d) == max(likelihood(i,:,d)));
+%    classification_error(i,d) = class(1) ~= labels(i);
+%end
+%classification_error = sum(classification_error,1);
+%optimal_d = classification_error == max(classification_error); 
