@@ -1,54 +1,57 @@
+%load('projtrainimg');%projtrainimg
+%load('mean');%m
+%load('eigenfaces');%eigenfaces
+%load('mu');
+%load('sigma');
 
-
-load('projtrainimg');%projtrainimg
-load('mean');%m
-load('eigenfaces');%eigenfaces
-
+%[MAX_d, classcount] = size(mu);
 %load test data
-images = loadMNISTImages('t10k-images.idx3-ubyte');
-labels = loadMNISTLabels('t10k-labels.idx1-ubyte');
-imgcount = size(images,2);
-
+%images = loadMNISTImages('t10k-images.idx3-ubyte');
+%test_img_no = size(images,2);
 %demean and project test images
-for i=1:imgcount
-    img = images(:,i);
-    img = double(img)-m; % mean subtracted vector
-    projtestimg = eigenfaces'*img; % projection of test image onto the facespace
-end
+%demean = double(images) - repmat(m, 1, test_img_no);
+%projtestimg = eigenfaces'*demean; % projection of test image onto the facespace
 
-MAX_d = 60;
-classcount = 10;
+%compute likelihood
+%likelihood = zeros(test_img_no,  MAX_d, classcount);
+%for d = 1 : MAX_d
+%    for j = 1 : classcount
+        %compute likelihood for each class j of input i
+%        muj = cell2mat(mu(d,j)); %dx1
+%        sigmaj = cell2mat(sigma(d,j)); %dxd
+%        for i = 1 : test_img_no
+%            likelihood(i,d,j) = mvnpdf(projtestimg(1:d, i), muj, sigmaj);
+%        end
+%    end    
+%end
 
-mu = cell(MAX_d, classcount);
-sigma = cell(MAX_d, classcount);
-for d = 1: MAX_d
-    %%%calculate mean and covariance of gaussian dist for each class (0->9)
-    %%%using training data
-    classes = cell(classcount,1);
-    for i= 1: imgcount
-        label = labels(i) + 1; %matlab index from 1->10
-        classes(label) = {[cell2mat(classes(label)) projtrainimg(1:d,i)]};
-    end
-    for j = 1: classcount
-        classj = cell2mat(classes(j));
-        mu(d,j) = {mean(classj, 2)}; %classes(j): d x m
-        sigma(d,j) = {cov(classj)};
-    end    
-end
+%save('likelihood','likelihood');
+%compute classification error and optimize d
+load('likelihood');
+test_labels = loadMNISTLabels('t10k-labels.idx1-ubyte');
 
-%classify test images 
-classification_error = zeros(imgcount, MAX_d);
+[test_img_no, MAX_d, classcount] = size(likelihood);
+predicted = (-1)* ones(test_img_no, MAX_d);
+error = [];
 for d = 1 : MAX_d
-    for i= 1 : imgcount
-        max_likelihood = -1;
-        for j = 1 : classcount
-            %compute likelihood for each class j of input i
-            likelihood = mvnpdf(projtestimg(1:d,i), mu(d,j), sigma(d,j));
-            if likelihood > max_likelihood
-                max_likelihood = likelihood;
-                classification_error(i,d) = (j ~= labels(i));
-            end
-        end
+    error_d = zeros(test_img_no,1);
+    for i = 1 : test_img_no
+       max_likelihood = 0;
+       for j = 1 : classcount
+           if likelihood(i,d,j) > max_likelihood
+               max_likelihood = likelihood(i,d,j) ;
+               predicted(i,d) = j - 1;
+               error_d(i) = (j - 1) ~= test_labels(i);
+           end   
+       end
     end
+    error = [error sum(error_d)];
 end
+[opt_err opt_d] = min(error);
+error(15)/test_img_no*100
+close all;
+
+    mat = confusionmat(test_labels , predicted(:,opt_d));
+    helperDisplayConfusionMatrix(mat);
+
 
