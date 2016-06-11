@@ -1,9 +1,10 @@
+function likelihood = test(m, eigenfaces, mu, sigma)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-load('projtrainimg');%projtrainimg
-load('mean');%m
-load('eigenfaces');%eigenfaces
-load('mu');
-load('sigma');
+%load('mean');%m
+%load('eigenfaces');%eigenfaces
+%load('projtrainimg');%projtrainimg
+%load('mu');
+%load('sigma');
 
 [MAX_d, classcount] = size(mu);
 %load test data
@@ -26,36 +27,6 @@ for d = 1 : MAX_d
     end    
 end
 
-save('likelihood','likelihood');
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%compute classification error and optimize d
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-load('likelihood');
-test_labels = loadMNISTLabels('t10k-labels.idx1-ubyte');
-
-[test_img_no, MAX_d, classcount] = size(likelihood);
-predicted = (-1)* ones(test_img_no, MAX_d);
-error = [];
-for d = 1 : MAX_d
-    error_d = zeros(test_img_no,1);
-    for i = 1 : test_img_no
-       max_likelihood = 0;
-       for j = 1 : classcount
-           if likelihood(i,d,j) > max_likelihood
-               max_likelihood = likelihood(i,d,j) ;
-               predicted(i,d) = j - 1;
-               error_d(i) = (j - 1) ~= test_labels(i);
-           end   
-       end
-    end
-    error = [error sum(error_d)];
+%save('likelihood','likelihood');
 end
-[opt_err opt_d] = min(error);
-
-error_15 = error(15)/test_img_no*100
-
-mat = confusionmat(test_labels , predicted(:,opt_d));
-helperDisplayConfusionMatrix(mat);
-
 

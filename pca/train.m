@@ -1,7 +1,7 @@
+function [m, eigenfaces, mu, sigma] = train(MAX_d)
 %%%%constant
-MAX_d = 60;
+%MAX_d = 60;
 classcount = 10;
-
 %%%%%%%%%%%%%%%%%load training data %%%%%%%%%%%%%%%%%%%%%%
 images = loadMNISTImages('train-images.idx3-ubyte');
 %load training ground truth
@@ -49,7 +49,9 @@ for d = 1: MAX_d
     end    
 end
 
-save('mean','m');
-save('eigenfaces', 'eigenfaces');
-save('mu','mu');
-save('sigma','sigma');
+
+%save('mean','m');
+%save('eigenfaces', 'eigenfaces');
+%save('mu','mu');
+%save('sigma','sigma');
+end
