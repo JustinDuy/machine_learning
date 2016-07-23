@@ -1,0 +1,60 @@
+load('dataGMM.mat');
+%X = Data';
+K = 4;
+[n,dim] = size(Data');
+[idx, initMeans] = kmeans(Data',K);
+initCovariances = zeros(dim, dim, K);
+initPriors = zeros(1,K);
+% Find the initial means, covariances and priors
+for i=1:K
+    data_k = Data(:,idx==i);
+    initPriors(i) = size(data_k,2) / n;
+
+    if size(data_k,1) == 0 || size(data_k,2) == 0
+        initCovariances(:,:,i) = cov(Data');
+    else
+        initCovariances(:,:,i) = cov(data_k');
+    end
+end
+
+curMeans = initMeans;
+curCovariances = initCovariances;
+curPriors = initPriors;
+
+Threshold = 1e-4;
+while ( true )
+    pdf = gmm_pdf(Data, curMeans, curCovariances, curPriors, K);
+    l_theta = sum(log(pdf));
+    %E-Step
+    resp = zeros(K,n);
+    sum_resp = zeros(1,n);
+    for k=1:K
+        resp(k,:) = curPriors(k) * mvnpdf(Data', curMeans(k,:),  curCovariances(:, :, k));
+        sum_resp = sum_resp + resp(k,:);
+    end
+    for k=1:K
+        resp(k,:) = resp(k,:) ./ sum_resp;
+    end
+    nk = sum(resp,2);
+    %M-Step
+    newMeans = zeros(K,dim);
+    newCovs = zeros(dim,dim,K);
+    newPriors = zeros(1,K);
+    for k=1:K
+        newMeans(k,:) = Data*resp(k,:)' ./ nk(k);
+        Xo = bsxfun(@minus,Data,newMeans(k,:)');%demean
+        %Xo = bsxfun(@times,Xo, resp(k,:));
+        newCovs(:,:,k) = cov(Xo');%Xo*Xo'/nk(k)+eye(d)*(1e-6);
+        newPriors(k) = nk(k) / n;
+    end
+    %re-evaluate log-likelihood
+    new_pdf = gmm_pdf(Data, newMeans, newCovs, newPriors, K);
+    new_l_theta = sum(log(new_pdf));
+    if(abs(new_l_theta - l_theta) < Threshold) 
+        break;
+    end;
+    curMeans = newMeans;
+    curCovariances = newCovs;
+    curPriors = newPriors;
+end;
+
