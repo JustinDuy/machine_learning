@@ -29,11 +29,10 @@ while ( true )
     resp = zeros(K,n);
     sum_resp = zeros(1,n);
     for k=1:K
-        resp(k,:) = curPriors(k) * mvnpdf(Data', curMeans(k,:),  curCovariances(:, :, k));
-        sum_resp = sum_resp + resp(k,:);
+        resp(k,:) = curPriors(k) * mypdf(Data', curMeans(k,:)',  curCovariances(:, :, k));
     end
-    for k=1:K
-        resp(k,:) = resp(k,:) ./ sum_resp;
+    for i=1:n
+        resp(:,i) = resp(:,i) / sum(resp(:,i));
     end
     nk = sum(resp,2);
     %M-Step
@@ -42,7 +41,7 @@ while ( true )
     newPriors = zeros(1,K);
     for k=1:K
         newMeans(k,:) = Data*resp(k,:)' ./ nk(k);
-        Xo = bsxfun(@minus,Data,newMeans(k,:)');%demean
+        Xo = bsxfun(@minus,Data,newMeans(k,:)');%center Data
         %Xo = bsxfun(@times,Xo, resp(k,:));
         newCovs(:,:,k) = cov(Xo');%Xo*Xo'/nk(k)+eye(d)*(1e-6);
         newPriors(k) = nk(k) / n;
